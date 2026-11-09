@@ -1,0 +1,74 @@
+import pytest
+
+from biblioteca.dominio.enums import EstadoFisico
+from biblioteca.dominio.errores import (
+    RegistroDuplicado,
+    RegistroNoEncontrado,
+    ReglaIncumplida,
+)
+from biblioteca.dominio.estados_ejemplar import DISPONIBLE, FUERA_DE_SERVICIO
+
+
+def test_duplicados_rechazados(esc):
+    s = esc.s
+    with pytest.raises(RegistroDuplicado):
+        s.sedes.crear(codigo="cba", nombre="x", direccion="x", telefono="1", email="a@b.co", horarios="x")
+    with pytest.raises(RegistroDuplicado):
+        s.socios.crear(dni="30000001", nombre="x", apellido="y", email="a@b.co")
+    with pytest.raises(RegistroDuplicado):
+        s.catalogo.crear_libro(isbn="9789500000001", titulo="x", autor="x", edicion="1", genero="x", editorial="x")
+    with pytest.raises(RegistroDuplicado):
+        s.catalogo.crear_ejemplar(esc.libro.id, esc.cba.id, "A-1")
+
+
+def test_datos_invalidos(esc):
+    with pytest.raises(ReglaIncumplida):
+        esc.s.socios.crear(dni="abc", nombre="x", apellido="y", email="a@b.co")
+    with pytest.raises(ReglaIncumplida):
+        esc.s.socios.crear(dni="30000009", nombre=" ", apellido="y", email="a@b.co")
+    with pytest.raises(ReglaIncumplida):
+        esc.s.socios.crear(dni="30000009", nombre="x", apellido="y", email="malo")
+    with pytest.raises(ReglaIncumplida):
+        esc.s.catalogo.crear_libro(isbn="12", titulo="x", autor="x", edicion="1", genero="x", editorial="x")
+
+
+def test_isbn_se_normaliza_y_conserva_texto(esc):
+    assert esc.libro.isbn == "9789500000001"
+    con_x = esc.s.catalogo.crear_libro(isbn="0-19-853453-X", titulo="x", autor="x", edicion="1", genero="x", editorial="x")
+    assert esc.s.repositorios.libros.requerir(con_x.id).isbn == "019853453X"
+
+
+def test_baja_logica_conserva_la_sede(esc):
+    esc.s.sedes.dar_baja(esc.ros.id)
+    assert not esc.s.repositorios.sedes.requerir(esc.ros.id).es_activa
+    assert esc.ros in esc.s.sedes.listar()
+    assert esc.ros not in esc.s.sedes.listar_activas()
+
+
+def test_modificacion_y_busqueda_de_socio(esc):
+    esc.s.socios.actualizar(esc.socio.id, dni="30000001", nombre="Ana", apellido="Ruiz", email="a@b.co")
+    assert [x.apellido for x in esc.s.socios.listar("ruiz")] == ["Ruiz"]
+
+
+def test_registro_inexistente(esc):
+    with pytest.raises(RegistroNoEncontrado):
+        esc.s.sedes.dar_baja(999)
+
+
+def test_sacar_de_servicio_y_reparar(esc):
+    esc.s.catalogo.sacar_de_servicio(esc.ejemplar.id, EstadoFisico.DANADO)
+    assert esc.estado_ejemplar() == FUERA_DE_SERVICIO
+    esc.s.catalogo.reparar(esc.ejemplar.id)
+    assert esc.estado_ejemplar() == DISPONIBLE
+
+
+def test_disponibilidad_por_libro_y_sede(esc):
+    esc.s.catalogo.crear_ejemplar(esc.libro.id, esc.ros.id, "A-2")
+    esc.s.prestamos.solicitar(esc.socio.id, esc.libro.id, esc.cba.id, esc.cba.id)
+
+    filas = esc.s.catalogo.disponibilidad(libro_id=esc.libro.id)
+    assert {(f["sede"], f["total"], f["disponibles"]) for f in filas} == {
+        ("Sede CBA", 1, 0),
+        ("Sede ROS", 1, 1),
+    }
+    assert len(esc.s.catalogo.disponibilidad(sede_id=esc.ros.id)) == 1
