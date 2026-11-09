@@ -1,0 +1,27 @@
+# Claude Code
+.claude/settings.json
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Datos y salidas locales
+*.db
+*.sqlite3
+salidas/
+
+# Material de la cátedra y documentos de diseño (no se versionan por defecto)
+/docs/
+
+# Windows / WSL
+*:Zone.Identifier
+Thumbs.db
+
+# Instrucciones locales del asistente
+CLAUDE.md
