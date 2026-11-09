@@ -11,6 +11,7 @@ from biblioteca.servicios.catalogo import CatalogoServicio
 from biblioteca.servicios.logistica import LogisticaServicio
 from biblioteca.servicios.prestamos import PrestamoServicio
 from biblioteca.servicios.reloj import Reloj
+from biblioteca.servicios.reportes import ReporteServicio
 from biblioteca.servicios.reservas import ReservaServicio
 
 
@@ -27,3 +28,4 @@ class Servicios:
             r, self.reloj, self.reservas, MultaPorDiaConTope(MONTO_MULTA_POR_DIA, TOPE_MULTA)
         )
         self.logistica = LogisticaServicio(r, self.reloj, self.reservas)
+        self.reportes = ReporteServicio(r.base_datos, self.reloj)
