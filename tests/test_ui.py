@@ -44,9 +44,8 @@ def responder(monkeypatch, datos):
 
 def test_todas_las_pantallas_cargan_datos(app):
     for indice in range(len(app.pantallas)):
-        app.pestanas.select(indice)
+        app.mostrar(indice)
         app.update()
-        app.refrescar_actual()
     assert app.errores == []
     assert pantalla(app, "PantallaSedes").tabla.filas()
     assert pantalla(app, "PantallaPrestamos").tabla.filas()

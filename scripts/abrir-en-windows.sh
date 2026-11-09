@@ -10,13 +10,15 @@ destino="$(wslpath -u "$perfil")/tp-dao"
 
 mkdir -p "$destino"
 rm -rf "$destino/src"
-cp -r "$raiz/src" "$raiz/pyproject.toml" "$raiz/README.md" "$destino/"
+cp -rp "$raiz/src" "$raiz/pyproject.toml" "$raiz/README.md" "$destino/"
 find "$destino/src" -type d -name __pycache__ -prune -exec rm -rf {} +
 
 cd "$destino"
 python="$destino/.venv/Scripts/python.exe"
-if [[ ! -x "$python" || pyproject.toml -nt .venv/instalado ]]; then
+if [[ ! -x "$python" ]]; then
     python.exe -m venv .venv
+fi
+if [[ ! -f .venv/instalado || pyproject.toml -nt .venv/instalado ]]; then
     "$python" -m pip install --quiet --disable-pip-version-check -e .
     touch .venv/instalado
 fi

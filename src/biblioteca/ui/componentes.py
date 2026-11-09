@@ -7,6 +7,9 @@ from functools import wraps
 from tkinter import messagebox, ttk
 
 from biblioteca.dominio.errores import ErrorNegocio, ReglaIncumplida
+from biblioteca.ui import tema
+
+ESTADOS_DE_ALERTA = {"Vencido", "Impaga", "ConIncidencia", "Inhabilitado", "Baja", "FueraDeServicio"}
 
 
 def accion(metodo: Callable) -> Callable:
@@ -26,25 +29,53 @@ def accion(metodo: Callable) -> Callable:
 
 
 class Tabla(ttk.Frame):
-    def __init__(self, padre, columnas: list[tuple[str, int]], multiple: bool = False) -> None:
-        super().__init__(padre)
+    def __init__(
+        self, padre, columnas: list[tuple[str, int]], multiple: bool = False,
+        vacio: str = "No hay registros para mostrar",
+    ) -> None:
+        super().__init__(padre, style="Borde.TFrame", padding=1)
         self._arbol = ttk.Treeview(self, show="headings", selectmode="extended" if multiple else "browse")
         barra = ttk.Scrollbar(self, orient="vertical", command=self._arbol.yview)
         self._arbol.configure(yscrollcommand=barra.set)
         self._arbol.pack(side="left", fill="both", expand=True)
         barra.pack(side="right", fill="y")
+        self._arbol.bind("<Configure>", lambda evento: self._ajustar_columnas(evento.width))
+        self._arbol.tag_configure("par", background=tema.FILA_PAR)
+        self._arbol.tag_configure("alerta", background=tema.ALERTA)
+        self._vacio = ttk.Label(self._arbol, text=vacio, style="Vacio.TLabel")
         self.configurar_columnas(columnas)
+        self._mostrar_vacio(True)
 
     def configurar_columnas(self, columnas: list[tuple[str, int]]) -> None:
+        self._columnas = columnas
         self._arbol["columns"] = [titulo for titulo, _ in columnas]
         for titulo, ancho in columnas:
-            self._arbol.heading(titulo, text=titulo)
-            self._arbol.column(titulo, width=ancho, anchor="w")
+            self._arbol.heading(titulo, text=titulo, anchor="w")
+            self._arbol.column(titulo, width=ancho, anchor="w", stretch=False)
+        self._ajustar_columnas(self._arbol.winfo_width())
+
+    def _ajustar_columnas(self, ancho_total: int) -> None:
+        """Reparte el ancho disponible respetando la proporción de cada columna."""
+        if ancho_total <= 1:
+            return
+        suma = sum(ancho for _, ancho in self._columnas)
+        for titulo, ancho in self._columnas:
+            self._arbol.column(titulo, width=ancho_total * ancho // suma)
 
     def cargar(self, filas: Iterable[tuple[int, tuple]]) -> None:
         self._arbol.delete(*self._arbol.get_children())
-        for identificador, valores in filas:
-            self._arbol.insert("", "end", iid=str(identificador), values=[self._texto(v) for v in valores])
+        cantidad = 0
+        for cantidad, (identificador, valores) in enumerate(filas, 1):
+            textos = [self._texto(v) for v in valores]
+            etiqueta = "alerta" if ESTADOS_DE_ALERTA & set(textos) else "par" if cantidad % 2 == 0 else ""
+            self._arbol.insert("", "end", iid=str(identificador), values=textos, tags=(etiqueta,))
+        self._mostrar_vacio(cantidad == 0)
+
+    def _mostrar_vacio(self, visible: bool) -> None:
+        if visible:
+            self._vacio.place(relx=0.5, rely=0.5, anchor="center")
+        else:
+            self._vacio.place_forget()
 
     @staticmethod
     def _texto(valor) -> str:
@@ -103,22 +134,24 @@ class Dialogo(tk.Toplevel):
         super().__init__(padre)
         self.title(titulo)
         self.transient(padre.winfo_toplevel())
+        self.configure(background=tema.FONDO)
         self.resultado: dict | None = None
         self._controles: dict[str, object] = {}
 
-        cuerpo = ttk.Frame(self, padding=16)
+        cuerpo = ttk.Frame(self, padding=22)
         cuerpo.pack(fill="both", expand=True)
-        for fila, campo in enumerate(campos):
-            ttk.Label(cuerpo, text=campo.etiqueta).grid(row=fila, column=0, sticky="w", pady=4, padx=(0, 12))
+        ttk.Label(cuerpo, text=titulo, style="Pagina.TLabel").grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 12))
+        for fila, campo in enumerate(campos, 1):
+            ttk.Label(cuerpo, text=campo.etiqueta).grid(row=fila, column=0, sticky="w", pady=4, padx=(0, 16))
             control = self._crear_control(cuerpo, campo)
             control.grid(row=fila, column=1, sticky="ew", pady=4)
             self._controles[campo.clave] = control
         cuerpo.columnconfigure(1, weight=1)
 
         botones = ttk.Frame(cuerpo)
-        botones.grid(row=len(campos), column=0, columnspan=2, sticky="e", pady=(12, 0))
+        botones.grid(row=len(campos) + 1, column=0, columnspan=2, sticky="e", pady=(16, 0))
         ttk.Button(botones, text="Cancelar", command=self.destroy).pack(side="right", padx=(6, 0))
-        ttk.Button(botones, text="Aceptar", command=self._aceptar).pack(side="right")
+        ttk.Button(botones, text="Aceptar", style="Primario.TButton", command=self._aceptar).pack(side="right")
         self.bind("<Escape>", lambda _: self.destroy())
 
     @staticmethod
@@ -153,7 +186,10 @@ def mostrar_texto(padre, titulo: str, contenido: str) -> None:
     ventana = tk.Toplevel(padre)
     ventana.title(titulo)
     ventana.transient(padre.winfo_toplevel())
-    texto = tk.Text(ventana, width=90, height=24, wrap="word", padx=12, pady=12)
+    texto = tk.Text(
+        ventana, width=90, height=24, wrap="word", padx=20, pady=18, relief="flat", font="TkDefaultFont",
+        background=tema.SUPERFICIE, foreground=tema.TINTA, selectbackground=tema.SELECCION, spacing3=4,
+    )
     texto.insert("1.0", contenido)
     texto.configure(state="disabled")
     texto.pack(fill="both", expand=True)
@@ -161,7 +197,7 @@ def mostrar_texto(padre, titulo: str, contenido: str) -> None:
 
 class Pantalla(ttk.Frame):
     def __init__(self, padre, servicios) -> None:
-        super().__init__(padre, padding=10)
+        super().__init__(padre)
         self.s = servicios
         self.construir()
 
@@ -173,9 +209,10 @@ class Pantalla(ttk.Frame):
 
     def barra(self, acciones: list[tuple[str, Callable]], padre=None) -> ttk.Frame:
         marco = ttk.Frame(padre or self)
-        marco.pack(fill="x", pady=(0, 8))
-        for texto, comando in acciones:
-            ttk.Button(marco, text=texto, command=comando).pack(side="left", padx=(0, 6))
+        marco.pack(fill="x", pady=(0, 10))
+        for orden, (texto, comando) in enumerate(acciones):
+            estilo = "Primario.TButton" if orden == 0 else "TButton"
+            ttk.Button(marco, text=texto, style=estilo, command=comando).pack(side="left", padx=(0, 6))
         return marco
 
     def opciones_sedes(self) -> list[tuple[str, int]]:

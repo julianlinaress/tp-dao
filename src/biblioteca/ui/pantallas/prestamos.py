@@ -3,7 +3,7 @@ from tkinter import ttk
 from biblioteca.dominio.enums import EstadoFisico, EstadoPrestamo
 from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Selector, Tabla, accion
 
-COLUMNAS = [("N°", 45), ("Socio", 190), ("Libro", 200), ("Ejemplar", 85), ("Tipo", 120), ("Origen", 140), ("Destino", 140), ("Solicitud", 90), ("Vencimiento", 90), ("Estado", 90)]
+COLUMNAS = [("N°", 45), ("Socio", 190), ("Libro", 200), ("Ejemplar", 85), ("Tipo", 120), ("Origen", 140), ("Destino", 140), ("Solicitud", 90), ("Vencimiento", 105), ("Estado", 90)]
 
 
 class PantallaPrestamos(Pantalla):

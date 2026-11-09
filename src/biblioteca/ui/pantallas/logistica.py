@@ -17,12 +17,12 @@ class PantallaLogistica(Pantalla):
         self.tipo.pack(side="left")
         self.tipo.cargar([(t.value, t) for t in TipoRemito])
         self.tipo.bind("<<ComboboxSelected>>", lambda _: self.refrescar())
-        self.pendientes = Tabla(self, PENDIENTES, multiple=True)
+        self.pendientes = Tabla(self, PENDIENTES, multiple=True, vacio="No hay préstamos a la espera de este envío")
         self.pendientes.pack(fill="both", expand=True, pady=(0, 12))
 
         ttk.Label(self, text="Remitos", style="Titulo.TLabel").pack(anchor="w")
         self.barra([("Empaquetar", self.empaquetar), ("Despachar", self.despachar), ("Recibir", self.recibir), ("Cancelar", self.cancelar), ("Ver trazabilidad", self.trazabilidad)])
-        self.remitos = Tabla(self, REMITOS)
+        self.remitos = Tabla(self, REMITOS, vacio="Todavía no se generaron remitos")
         self.remitos.pack(fill="both", expand=True)
 
     def refrescar(self) -> None:

@@ -24,50 +24,46 @@ def leer_fecha(texto: str) -> date | None:
 class PantallaReportes(Pantalla):
     def construir(self) -> None:
         self.resultado = None
+        self._grupos: dict[str, list[ttk.Frame]] = {}
         arriba = ttk.Frame(self)
-        arriba.pack(fill="x", pady=(0, 6))
-        ttk.Label(arriba, text="Reporte:").pack(side="left")
-        self.reporte = Selector(arriba, width=48)
-        self.reporte.pack(side="left", padx=6)
+        arriba.pack(fill="x", pady=(0, 10))
+        self.reporte = Selector(arriba, width=46)
+        self.reporte.pack(side="left", padx=(0, 8))
         self.reporte.cargar([(r.titulo, r) for r in self.s.reportes.listar()])
         self.reporte.bind("<<ComboboxSelected>>", lambda _: self._ajustar_filtros())
-        for texto, comando in (("Generar", self.generar), ("Exportar PDF", self.pdf), ("Exportar CSV", self.csv)):
-            ttk.Button(arriba, text=texto, command=comando).pack(side="left", padx=(0, 6))
+        ttk.Button(arriba, text="Generar reporte", style="Primario.TButton", command=self.generar).pack(side="left", padx=(0, 6))
+        ttk.Button(arriba, text="Exportar PDF", command=self.pdf).pack(side="left", padx=(0, 6))
+        ttk.Button(arriba, text="Exportar CSV", command=self.csv).pack(side="left")
 
-        marco = ttk.Frame(self)
-        marco.pack(fill="x", pady=(0, 6))
-        self.sede = self._selector(marco, "Sede:", 22)
-        self.genero = self._selector(marco, "Género:", 12)
-        self.tipo_prestamo = self._selector(marco, "Préstamo:", 15)
+        self.marco_filtros = ttk.Frame(self)
+        self.marco_filtros.pack(fill="x", pady=(0, 12))
+        self.sede = self._selector("sede", "Sede", 24)
+        self.genero = self._selector("genero", "Género", 14)
+        self.tipo_prestamo = self._selector("tipo_prestamo", "Préstamo", 18)
         self.tipo_prestamo.cargar([(n, n) for n in TIPOS_PRESTAMO], vacio="Todos")
-        self.tipo_remito = self._selector(marco, "Remito:", 9)
+        self.tipo_remito = self._selector("tipo_remito", "Remito", 10)
         self.tipo_remito.cargar([(t.value, t.value) for t in TipoRemito], vacio="Todos")
-        self.desde = self._entrada(marco, "Desde:", 11)
-        self.hasta = self._entrada(marco, "Hasta:", 11)
-        self.limite = ttk.Spinbox(marco, from_=1, to=100, width=4)
+        self.desde = self._control("periodo", "Desde (AAAA-MM-DD)", lambda g: ttk.Entry(g, width=18))
+        self.hasta = self._control("periodo", "Hasta (AAAA-MM-DD)", lambda g: ttk.Entry(g, width=18))
+        self.limite = self._control("limite", "Cantidad", lambda g: ttk.Spinbox(g, from_=1, to=100, width=6))
         self.limite.set(10)
-        ttk.Label(marco, text="Top:").pack(side="left", padx=(6, 3))
-        self.limite.pack(side="left")
 
-        self.metricas = ttk.Label(self, style="Titulo.TLabel", wraplength=1150, justify="left")
-        self.metricas.pack(fill="x", pady=6)
-        self.tabla = Tabla(self, [("Resultado", 400)])
-        self.tabla.pack(fill="both", expand=True)
+        self.metricas = ttk.Frame(self)
+        self.metricas.pack(fill="x")
+        self.tabla = Tabla(self, [("Resultado", 400)], vacio="Elegí los filtros y generá el reporte")
+        self.tabla.pack(fill="both", expand=True, pady=(12, 0))
         self._ajustar_filtros()
 
-    @staticmethod
-    def _selector(padre, etiqueta: str, ancho: int) -> Selector:
-        ttk.Label(padre, text=etiqueta).pack(side="left", padx=(6, 3))
-        selector = Selector(padre, width=ancho)
-        selector.pack(side="left")
-        return selector
+    def _control(self, clave: str, etiqueta: str, crear):
+        grupo = ttk.Frame(self.marco_filtros)
+        ttk.Label(grupo, text=etiqueta, style="Campo.TLabel").pack(anchor="w")
+        control = crear(grupo)
+        control.pack(anchor="w")
+        self._grupos.setdefault(clave, []).append(grupo)
+        return control
 
-    @staticmethod
-    def _entrada(padre, etiqueta: str, ancho: int) -> ttk.Entry:
-        ttk.Label(padre, text=etiqueta).pack(side="left", padx=(6, 3))
-        entrada = ttk.Entry(padre, width=ancho)
-        entrada.pack(side="left")
-        return entrada
+    def _selector(self, clave: str, etiqueta: str, ancho: int) -> Selector:
+        return self._control(clave, etiqueta, lambda g: Selector(g, width=ancho))
 
     def refrescar(self) -> None:
         self.sede.cargar([(s.nombre, s.id) for s in self.s.sedes.listar()], vacio="Todas")
@@ -75,15 +71,20 @@ class PantallaReportes(Pantalla):
 
     def _ajustar_filtros(self) -> None:
         filtros = self.reporte.valor().filtros
-        controles = {
-            "sede": (self.sede,), "genero": (self.genero,), "tipo_prestamo": (self.tipo_prestamo,),
-            "tipo_remito": (self.tipo_remito,), "periodo": (self.desde, self.hasta), "limite": (self.limite,),
-        }
-        for clave, grupo in controles.items():
-            for control in grupo:
-                activo = clave in filtros
-                combo = isinstance(control, Selector)
-                control.configure(state=("readonly" if combo else "normal") if activo else "disabled")
+        for clave, grupos in self._grupos.items():
+            for grupo in grupos:
+                grupo.pack_forget()
+                if clave in filtros:
+                    grupo.pack(side="left", padx=(0, 14))
+
+    def _mostrar_metricas(self, metricas: dict[str, str]) -> None:
+        for hijo in self.metricas.winfo_children():
+            hijo.destroy()
+        for nombre, valor in metricas.items():
+            bloque = ttk.Frame(self.metricas)
+            bloque.pack(side="left", padx=(0, 34))
+            ttk.Label(bloque, text=valor, style="Metrica.TLabel").pack(anchor="w")
+            ttk.Label(bloque, text=nombre, style="Campo.TLabel").pack(anchor="w")
 
     def _filtro(self) -> FiltroReporte:
         filtros = self.reporte.valor().filtros
@@ -100,10 +101,10 @@ class PantallaReportes(Pantalla):
     @accion
     def generar(self) -> None:
         self.resultado = self.reporte.valor().generar(self._filtro())
-        ancho = max(90, 1150 // len(self.resultado.columnas))
+        ancho = max(90, 1000 // len(self.resultado.columnas))
         self.tabla.configurar_columnas([(c, ancho) for c in self.resultado.columnas])
         self.tabla.cargar(enumerate(self.resultado.filas))
-        self.metricas.configure(text="     ".join(f"{k}: {v}" for k, v in self.resultado.metricas.items()))
+        self._mostrar_metricas(self.resultado.metricas)
 
     def _exportar(self, extension: str, exportador) -> None:
         if self.resultado is None:
