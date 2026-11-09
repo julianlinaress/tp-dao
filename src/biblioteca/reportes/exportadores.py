@@ -27,7 +27,7 @@ def _imagen(grafico: Grafico) -> Image:
     eje = figura.subplots()
     posiciones = list(range(len(grafico.etiquetas)))
     eje.barh(posiciones, grafico.valores, color="#2f6f8f")
-    eje.set_yticks(posiciones, [etiqueta[:40] for etiqueta in grafico.etiquetas], fontsize=8)
+    eje.set_yticks(posiciones, [etiqueta[:60] for etiqueta in grafico.etiquetas], fontsize=8)
     eje.invert_yaxis()
     eje.set_title(grafico.titulo, fontsize=11)
     eje.spines[["top", "right"]].set_visible(False)

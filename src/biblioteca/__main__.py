@@ -1,13 +1,14 @@
 """Punto de entrada de la aplicación."""
 
-import tkinter as tk
+from biblioteca.config import RUTA_BASE_DATOS
+from biblioteca.contenedor import Servicios
+from biblioteca.ui.aplicacion import Aplicacion
 
 
 def main() -> None:
-    ventana = tk.Tk()
-    ventana.title("Sistema de Préstamos Interbibliotecarios")
-    ventana.geometry("1024x700")
-    ventana.mainloop()
+    servicios = Servicios(RUTA_BASE_DATOS)
+    servicios.reservas.vencer_vencidas()
+    Aplicacion(servicios, RUTA_BASE_DATOS).mainloop()
 
 
 if __name__ == "__main__":

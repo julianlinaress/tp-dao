@@ -18,6 +18,14 @@ uv run biblioteca
 uv run pytest
 ```
 
+Para una demostración, usar **Archivo > Cargar datos de ejemplo** con la base vacía. Los tests de
+interfaz necesitan un display; sin entorno gráfico: `xvfb-run -a uv run pytest`.
+
+## Reportes
+
+Préstamos activos y en tránsito, vencidos y multas, libros más solicitados, disponibilidad por sede,
+tasa de envíos e incidencias, y movimiento entre sedes. Se filtran y exportan a PDF o CSV.
+
 ## Estructura
 
 ```text
