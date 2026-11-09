@@ -10,7 +10,7 @@ RECEPCIONES = [(estado.value, estado) for estado in EstadoRecepcion]
 
 class PantallaLogistica(Pantalla):
     def construir(self) -> None:
-        ttk.Label(self, text="Préstamos a la espera de envío", font=("", 10, "bold")).pack(anchor="w")
+        ttk.Label(self, text="Préstamos a la espera de envío", style="Titulo.TLabel").pack(anchor="w")
         barra = self.barra([("Generar remito", self.generar)])
         ttk.Label(barra, text="Tipo:").pack(side="left", padx=(12, 6))
         self.tipo = Selector(barra, width=12)
@@ -20,7 +20,7 @@ class PantallaLogistica(Pantalla):
         self.pendientes = Tabla(self, PENDIENTES, multiple=True)
         self.pendientes.pack(fill="both", expand=True, pady=(0, 12))
 
-        ttk.Label(self, text="Remitos", font=("", 10, "bold")).pack(anchor="w")
+        ttk.Label(self, text="Remitos", style="Titulo.TLabel").pack(anchor="w")
         self.barra([("Empaquetar", self.empaquetar), ("Despachar", self.despachar), ("Recibir", self.recibir), ("Cancelar", self.cancelar), ("Ver trazabilidad", self.trazabilidad)])
         self.remitos = Tabla(self, REMITOS)
         self.remitos.pack(fill="both", expand=True)

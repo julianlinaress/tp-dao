@@ -49,7 +49,7 @@ class PantallaReportes(Pantalla):
         ttk.Label(marco, text="Top:").pack(side="left", padx=(6, 3))
         self.limite.pack(side="left")
 
-        self.metricas = ttk.Label(self, font=("", 10, "bold"), wraplength=1150, justify="left")
+        self.metricas = ttk.Label(self, style="Titulo.TLabel", wraplength=1150, justify="left")
         self.metricas.pack(fill="x", pady=6)
         self.tabla = Tabla(self, [("Resultado", 400)])
         self.tabla.pack(fill="both", expand=True)

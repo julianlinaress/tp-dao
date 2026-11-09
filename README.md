@@ -18,6 +18,9 @@ uv run biblioteca
 uv run pytest
 ```
 
+Desde WSL, `./scripts/abrir-en-windows.sh` abre la aplicación nativa de Windows. Copia el código a
+`%USERPROFILE%\tp-dao`, donde también quedan la base y los reportes. Requiere Python 3.14 en Windows.
+
 Para una demostración, usar **Archivo > Cargar datos de ejemplo** con la base vacía. Los tests de
 interfaz necesitan un display; sin entorno gráfico: `xvfb-run -a uv run pytest`.
 

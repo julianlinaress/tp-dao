@@ -16,6 +16,7 @@ from biblioteca.ui.pantallas.reportes import PantallaReportes
 from biblioteca.ui.pantallas.reservas import PantallaReservas
 from biblioteca.ui.pantallas.sedes import PantallaSedes
 from biblioteca.ui.pantallas.socios import PantallaSocios
+from biblioteca.ui.tema import aplicar_tema
 
 PANTALLAS = [
     ("Préstamos", PantallaPrestamos),
@@ -37,7 +38,7 @@ class Aplicacion(tk.Tk):
         self.title("Sistema de Préstamos Interbibliotecarios")
         self.geometry("1240x720")
         self.minsize(1000, 600)
-        ttk.Style(self).theme_use("clam")
+        aplicar_tema(self)
         self._ruta = ruta
         self._crear_menu()
 
