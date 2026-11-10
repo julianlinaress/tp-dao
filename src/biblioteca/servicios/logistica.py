@@ -53,6 +53,8 @@ class LogisticaServicio:
     def empaquetar(self, remito_id: int) -> None:
         with self._r.transaccion():
             remito = self._r.remitos.requerir(remito_id)
+            exigir_sede_activa(remito.sede_origen)
+            exigir_sede_activa(remito.sede_destino)
             remito.empaquetar(self._reloj.ahora())
             self._r.remitos.actualizar(remito)
 

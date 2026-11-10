@@ -12,7 +12,7 @@ from biblioteca.ui import componentes
 from biblioteca.ui.aplicacion import Aplicacion
 from biblioteca.ui.componentes import Dialogo
 from biblioteca.ui.pantallas import logistica as pantalla_logistica
-from biblioteca.ui.pantallas.reportes import leer_fecha
+from biblioteca.ui.pantallas.reportes import leer_cantidad, leer_fecha
 
 pytestmark = pytest.mark.skipif(not os.environ.get("DISPLAY"), reason="requiere display")
 
@@ -131,3 +131,11 @@ def test_fecha_invalida_en_reporte(app):
     assert leer_fecha("") is None
     with pytest.raises(ReglaIncumplida):
         leer_fecha("ayer")
+
+
+def test_cantidad_invalida_en_reporte(app):
+    assert leer_cantidad("") == 10
+    assert leer_cantidad(" 5 ") == 5
+    for texto in ("abc", "0", "-3", "2.5"):
+        with pytest.raises(ReglaIncumplida):
+            leer_cantidad(texto)

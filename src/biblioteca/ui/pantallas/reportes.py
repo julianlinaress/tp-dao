@@ -21,6 +21,15 @@ def leer_fecha(texto: str) -> date | None:
         raise ReglaIncumplida("Las fechas deben tener el formato AAAA-MM-DD") from error
 
 
+def leer_cantidad(texto: str) -> int:
+    texto = texto.strip()
+    if not texto:
+        return 10
+    if not texto.isdigit() or int(texto) < 1:
+        raise ReglaIncumplida("La cantidad debe ser un número entero mayor a cero")
+    return int(texto)
+
+
 class PantallaReportes(Pantalla):
     def construir(self) -> None:
         self.resultado = None
@@ -95,7 +104,7 @@ class PantallaReportes(Pantalla):
             tipo_remito=self.tipo_remito.valor() if "tipo_remito" in filtros else None,
             desde=leer_fecha(self.desde.get()) if "periodo" in filtros else None,
             hasta=leer_fecha(self.hasta.get()) if "periodo" in filtros else None,
-            limite=int(self.limite.get() or 10),
+            limite=leer_cantidad(self.limite.get()),
         )
 
     @accion

@@ -43,7 +43,7 @@ def test_socio_inhabilitado_no_reserva(esc):
 
 def test_sede_de_baja_no_reserva(esc):
     prestado(esc)
-    esc.s.sedes.dar_baja(esc.cba.id)
+    esc.forzar_baja(esc.cba)
     with pytest.raises(ReglaIncumplida, match="baja"):
         reservar(esc, esc.otro_socio())
 
@@ -125,3 +125,36 @@ def test_retorno_de_ejemplar_activa_reserva_en_sede_propia(esc):
 
     enviar(TipoRemito.RETORNO)
     assert estado(esc, reserva) is EstadoReserva.ACTIVA
+
+
+def test_no_se_da_de_baja_sede_con_reserva_vigente(esc):
+    prestamo = prestado(esc)
+    reserva = reservar(esc, esc.otro_socio())
+    devolver(esc, prestamo)
+    with pytest.raises(ReglaIncumplida, match="reserva"):
+        esc.s.sedes.dar_baja(esc.cba.id)
+    esc.s.reservas.cancelar(reserva.id)
+    esc.s.sedes.dar_baja(esc.cba.id)
+
+
+def test_retiro_de_reserva_exige_socio_sin_vencidos(esc):
+    otro = esc.otro_socio()
+    libro, _ = esc.otro_libro()
+    vencido = esc.s.prestamos.solicitar(otro.id, libro.id, esc.cba.id, esc.cba.id)
+    esc.s.prestamos.retirar(vencido.id)
+    prestamo = prestado(esc)
+    reserva = reservar(esc, otro)
+    esc.reloj.avanzar(days=15)
+    devolver(esc, prestamo)
+    with pytest.raises(ReglaIncumplida, match="vencidos"):
+        esc.s.reservas.retirar(reserva.id)
+
+
+def test_retiro_de_reserva_informa_socio_inhabilitado(esc):
+    prestamo = prestado(esc)
+    otro = esc.otro_socio()
+    reserva = reservar(esc, otro)
+    devolver(esc, prestamo)
+    esc.s.socios.cambiar_habilitacion(otro.id, False)
+    with pytest.raises(ReglaIncumplida, match="inhabilitado"):
+        esc.s.reservas.retirar(reserva.id)

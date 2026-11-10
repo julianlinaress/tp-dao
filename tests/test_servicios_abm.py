@@ -72,3 +72,25 @@ def test_disponibilidad_por_libro_y_sede(esc):
         ("Sede ROS", 1, 1),
     }
     assert len(esc.s.catalogo.disponibilidad(sede_id=esc.ros.id)) == 1
+
+
+def test_no_se_da_de_baja_sede_con_prestamo_sin_cerrar(esc):
+    esc.s.prestamos.solicitar(esc.socio.id, esc.libro.id, esc.cba.id, esc.cba.id)
+    with pytest.raises(ReglaIncumplida, match="préstamo"):
+        esc.s.sedes.dar_baja(esc.cba.id)
+    assert esc.s.repositorios.sedes.requerir(esc.cba.id).es_activa
+
+
+@pytest.mark.parametrize("fisico", [EstadoFisico.DANADO, EstadoFisico.DESTRUIDO])
+def test_alta_de_ejemplar_danado_queda_fuera_de_servicio(esc, fisico):
+    ejemplar = esc.s.catalogo.crear_ejemplar(esc.libro.id, esc.cba.id, "D-1", fisico)
+    assert esc.estado_ejemplar(ejemplar) == FUERA_DE_SERVICIO
+    filas = esc.s.catalogo.disponibilidad(esc.libro.id, esc.cba.id)
+    assert (filas[0]["total"], filas[0]["disponibles"]) == (2, 1)
+
+
+def test_alta_de_ejemplar_deteriorado_queda_disponible(esc):
+    ejemplar = esc.s.catalogo.crear_ejemplar(esc.libro.id, esc.cba.id, "D-1", EstadoFisico.DETERIORADO)
+    guardado = esc.s.repositorios.ejemplares.requerir(ejemplar.id)
+    assert guardado.estado_circulacion.nombre == DISPONIBLE
+    assert guardado.estado_fisico is EstadoFisico.DETERIORADO

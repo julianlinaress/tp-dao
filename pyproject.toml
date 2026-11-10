@@ -3,7 +3,7 @@ name = "biblioteca"
 version = "0.1.0"
 description = "Sistema de Préstamos Interbibliotecarios - TP Integrador DAO 2026"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
     "matplotlib==3.11.2",
     "reportlab==5.1.0",
