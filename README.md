@@ -4,7 +4,7 @@ TP Integrador 2026 de Desarrollo de Aplicaciones con Objetos (UTN FRC), Tema 1.
 
 ## Stack
 
-- Python 3.14 orientado a objetos
+- Python 3.12 o superior, orientado a objetos
 - Tkinter para la interfaz gráfica
 - SQLite (`sqlite3`) con patrón DAO
 - ReportLab y Matplotlib para los reportes
@@ -19,9 +19,9 @@ uv run pytest
 ```
 
 Desde WSL, `./scripts/abrir-en-windows.sh` abre la aplicación nativa de Windows. Copia el código a
-`%USERPROFILE%\tp-dao`, donde también quedan la base y los reportes. Requiere Python 3.14 en Windows.
+`%USERPROFILE%\tp-dao`, donde también quedan la base y los reportes. Requiere Python 3.12 o superior en Windows.
 
-Para una demostración, usar **Archivo > Cargar datos de ejemplo** con la base vacía. Los tests de
+Para una demostración, usar el botón **Cargar datos de ejemplo** de la barra lateral con la base vacía. Los tests de
 interfaz necesitan un display; sin entorno gráfico: `xvfb-run -a uv run pytest`.
 
 ## Reportes
