@@ -50,9 +50,12 @@ class ReservaServicio:
             if reserva.esta_vencida(hoy):
                 raise ReglaIncumplida("La reserva está vencida")
             exigir_sede_activa(reserva.sede)
+            exigir_socio_habilitado(reserva.socio)
+            if self._r.prestamos.tiene_vencidos(reserva.socio.id, hoy):
+                raise ReglaIncumplida("El socio tiene préstamos vencidos")
             vigentes = self._r.prestamos.contar_vigentes(reserva.socio.id)
             if not reserva.socio.puede_pedir_prestamo(vigentes):
-                raise ReglaIncumplida("El socio no puede recibir más préstamos")
+                raise ReglaIncumplida("El socio alcanzó el máximo de préstamos activos")
             reserva.atender()
             prestamo = SolicitudPrestamo(
                 socio=reserva.socio, ejemplar=reserva.ejemplar, sede_origen=reserva.sede,
