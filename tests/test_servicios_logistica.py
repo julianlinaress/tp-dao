@@ -120,12 +120,32 @@ def test_sede_de_baja_bloquea_generar_y_despachar(esc):
     prestamo = solicitar(esc)
     remito = esc.s.logistica.generar_remito(TipoRemito.IDA, [prestamo.id])
     esc.s.logistica.empaquetar(remito.id)
-    esc.s.sedes.dar_baja(esc.ros.id)
+    esc.forzar_baja(esc.ros)
     with pytest.raises(ReglaIncumplida, match="baja"):
         esc.s.logistica.despachar(remito.id)
     esc.s.logistica.cancelar(remito.id)
     with pytest.raises(ReglaIncumplida, match="baja"):
         esc.s.logistica.generar_remito(TipoRemito.IDA, [prestamo.id])
+
+
+def test_no_se_da_de_baja_sede_con_remito_activo(esc):
+    prestamo = solicitar(esc)
+    esc.s.logistica.generar_remito(TipoRemito.IDA, [prestamo.id])
+    with pytest.raises(ReglaIncumplida, match="remito"):
+        esc.s.sedes.dar_baja(esc.ros.id)
+
+
+def test_no_se_da_de_baja_sede_con_ejemplar_pendiente_de_retorno(esc):
+    prestamo = en_destino(esc)
+    esc.s.prestamos.retirar(prestamo.id)
+    esc.s.prestamos.registrar_devolucion(prestamo.id, esc.ros.id, EstadoFisico.BUENO)
+    for sede in (esc.cba, esc.ros):
+        with pytest.raises(ReglaIncumplida, match="ejemplar"):
+            esc.s.sedes.dar_baja(sede.id)
+    retorno = enviar(esc, [prestamo.id], TipoRemito.RETORNO)
+    esc.s.logistica.recibir(retorno.id)
+    esc.s.sedes.dar_baja(esc.cba.id)
+    assert not esc.s.repositorios.sedes.requerir(esc.cba.id).es_activa
 
 
 def test_prestamo_con_remito_activo_no_se_cancela(esc):

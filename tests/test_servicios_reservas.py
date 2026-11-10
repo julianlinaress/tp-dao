@@ -43,7 +43,7 @@ def test_socio_inhabilitado_no_reserva(esc):
 
 def test_sede_de_baja_no_reserva(esc):
     prestado(esc)
-    esc.s.sedes.dar_baja(esc.cba.id)
+    esc.forzar_baja(esc.cba)
     with pytest.raises(ReglaIncumplida, match="baja"):
         reservar(esc, esc.otro_socio())
 
@@ -125,3 +125,14 @@ def test_retorno_de_ejemplar_activa_reserva_en_sede_propia(esc):
 
     enviar(TipoRemito.RETORNO)
     assert estado(esc, reserva) is EstadoReserva.ACTIVA
+
+
+def test_no_se_da_de_baja_sede_con_reserva_vigente(esc):
+    prestamo = prestado(esc)
+    reserva = reservar(esc, esc.otro_socio())
+    devolver(esc, prestamo)
+    with pytest.raises(ReglaIncumplida, match="reserva"):
+        esc.s.sedes.dar_baja(esc.cba.id)
+    esc.s.reservas.cancelar(reserva.id)
+    esc.s.sedes.dar_baja(esc.cba.id)
+

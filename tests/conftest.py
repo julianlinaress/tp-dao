@@ -38,6 +38,11 @@ class Escenario:
         ejemplar = self.s.catalogo.crear_ejemplar(libro.id, (sede or self.cba).id, codigo)
         return libro, ejemplar
 
+    def forzar_baja(self, sede):
+        """Deja la sede inactiva sin pasar por las reglas del servicio de sedes."""
+        sede.dar_baja()
+        self.s.repositorios.sedes.actualizar(sede)
+
     def estado_ejemplar(self, ejemplar=None):
         item = self.s.repositorios.ejemplares.requerir((ejemplar or self.ejemplar).id)
         return item.estado_circulacion.nombre

@@ -1,8 +1,16 @@
 """Administración de sedes y socios."""
 
+from biblioteca.dominio.errores import ReglaIncumplida
 from biblioteca.dominio.sede import Sede
 from biblioteca.dominio.socio import Socio
 from biblioteca.servicios.validaciones import limpiar_textos, validar_dni, validar_email
+
+DESCRIPCION_PENDIENTES = {
+    "prestamos": "préstamo(s) sin cerrar",
+    "remitos": "remito(s) activo(s)",
+    "reservas": "reserva(s) vigente(s)",
+    "ejemplares": "ejemplar(es) fuera de su sede",
+}
 
 
 class SedeServicio:
@@ -27,9 +35,20 @@ class SedeServicio:
         return sede
 
     def dar_baja(self, sede_id: int) -> None:
-        sede = self._r.sedes.requerir(sede_id)
-        sede.dar_baja()
-        self._r.sedes.actualizar(sede)
+        with self._r.transaccion():
+            sede = self._r.sedes.requerir(sede_id)
+            pendientes = self._r.sedes.operaciones_en_curso(sede_id)
+            detalle = [
+                f"{cantidad} {DESCRIPCION_PENDIENTES[clave]}"
+                for clave, cantidad in pendientes.items()
+                if cantidad
+            ]
+            if detalle:
+                raise ReglaIncumplida(
+                    f"No se puede dar de baja {sede.nombre}: tiene " + ", ".join(detalle)
+                )
+            sede.dar_baja()
+            self._r.sedes.actualizar(sede)
 
     def listar(self) -> list[Sede]:
         return self._r.sedes.listar()

@@ -72,3 +72,11 @@ def test_disponibilidad_por_libro_y_sede(esc):
         ("Sede ROS", 1, 1),
     }
     assert len(esc.s.catalogo.disponibilidad(sede_id=esc.ros.id)) == 1
+
+
+def test_no_se_da_de_baja_sede_con_prestamo_sin_cerrar(esc):
+    esc.s.prestamos.solicitar(esc.socio.id, esc.libro.id, esc.cba.id, esc.cba.id)
+    with pytest.raises(ReglaIncumplida, match="préstamo"):
+        esc.s.sedes.dar_baja(esc.cba.id)
+    assert esc.s.repositorios.sedes.requerir(esc.cba.id).es_activa
+

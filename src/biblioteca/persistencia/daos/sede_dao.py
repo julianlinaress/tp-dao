@@ -37,3 +37,22 @@ class SedeDAO(DAO[Sede]):
 
     def listar_activas(self) -> list[Sede]:
         return self._mapear("SELECT * FROM sedes WHERE es_activa = 1 ORDER BY nombre")
+
+    def operaciones_en_curso(self, sede_id: int) -> dict[str, int]:
+        """Cuenta lo que todavía involucra a la sede e impediría darla de baja."""
+        fila = self._uno(
+            """SELECT
+                 (SELECT COUNT(*) FROM prestamos
+                   WHERE estado IN ('Solicitado', 'Activo')
+                     AND ?1 IN (sede_origen_id, sede_destino_id)) AS prestamos,
+                 (SELECT COUNT(*) FROM remitos
+                   WHERE estado IN ('Generado', 'Empaquetado', 'EnTransito')
+                     AND ?1 IN (sede_origen_id, sede_destino_id)) AS remitos,
+                 (SELECT COUNT(*) FROM reservas
+                   WHERE estado IN ('Pendiente', 'Activa') AND sede_id = ?1) AS reservas,
+                 (SELECT COUNT(*) FROM ejemplares
+                   WHERE (sede_id = ?1 AND estado_circulacion IN ('EnTransito', 'PendienteRetorno'))
+                      OR (ubicacion_sede_id = ?1 AND sede_id <> ?1)) AS ejemplares""",
+            (sede_id,),
+        )
+        return dict(fila)
