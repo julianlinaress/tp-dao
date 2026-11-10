@@ -116,11 +116,12 @@ def test_remito_cancelado_permite_generar_otro(esc):
     assert [p.id for p in esc.s.logistica.pendientes(TipoRemito.IDA)] == [prestamo.id]
 
 
-def test_sede_de_baja_bloquea_generar_y_despachar(esc):
+def test_sede_de_baja_bloquea_generar_empaquetar_y_despachar(esc):
     prestamo = solicitar(esc)
     remito = esc.s.logistica.generar_remito(TipoRemito.IDA, [prestamo.id])
-    esc.s.logistica.empaquetar(remito.id)
     esc.forzar_baja(esc.ros)
+    with pytest.raises(ReglaIncumplida, match="baja"):
+        esc.s.logistica.empaquetar(remito.id)
     with pytest.raises(ReglaIncumplida, match="baja"):
         esc.s.logistica.despachar(remito.id)
     esc.s.logistica.cancelar(remito.id)
