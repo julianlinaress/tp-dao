@@ -44,8 +44,11 @@ class CatalogoServicio:
             libro=self._r.libros.requerir(libro_id),
             sede=sede,
             ubicacion_actual=sede,
-            estado_fisico=estado_fisico,
         )
+        if estado_fisico.requiere_reparacion:
+            ejemplar.sacar_de_servicio(estado_fisico)
+        else:
+            ejemplar.estado_fisico = estado_fisico
         return self._r.ejemplares.crear(ejemplar)
 
     def listar_ejemplares(self) -> list[Ejemplar]:
