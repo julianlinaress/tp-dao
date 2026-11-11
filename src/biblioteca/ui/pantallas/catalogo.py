@@ -81,7 +81,9 @@ class PantallaEjemplares(Pantalla):
 
     @accion
     def reparar(self) -> None:
-        self.s.catalogo.reparar(self.tabla.elegido())
+        ejemplar_id = self.tabla.elegido()
+        if confirmar(self, "¿Reparar / reincorporar el ejemplar seleccionado?"):
+            self.s.catalogo.reparar(ejemplar_id)
 
 
 class PantallaDisponibilidad(Pantalla):

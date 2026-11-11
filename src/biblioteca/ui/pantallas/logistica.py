@@ -1,7 +1,7 @@
 from tkinter import ttk
 
 from biblioteca.dominio.enums import EstadoRecepcion, TipoRemito
-from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Selector, Tabla, accion, mostrar_texto
+from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Selector, Tabla, accion, confirmar, mostrar_texto
 
 PENDIENTES = [("N°", 50), ("Libro", 240), ("Ejemplar", 90), ("Socio", 200), ("Desde", 170), ("Hacia", 170)]
 REMITOS = [("N°", 50), ("Tipo", 70), ("Emisión", 150), ("Origen", 170), ("Destino", 170), ("Ejemplares", 80), ("Estado", 120)]
@@ -48,15 +48,21 @@ class PantallaLogistica(Pantalla):
 
     @accion
     def empaquetar(self) -> None:
-        self.s.logistica.empaquetar(self.remitos.elegido())
+        remito_id = self.remitos.elegido()
+        if confirmar(self, f"¿Empaquetar el remito {remito_id}?"):
+            self.s.logistica.empaquetar(remito_id)
 
     @accion
     def despachar(self) -> None:
-        self.s.logistica.despachar(self.remitos.elegido())
+        remito_id = self.remitos.elegido()
+        if confirmar(self, f"¿Despachar el remito {remito_id}?"):
+            self.s.logistica.despachar(remito_id)
 
     @accion
     def cancelar(self) -> None:
-        self.s.logistica.cancelar(self.remitos.elegido())
+        remito_id = self.remitos.elegido()
+        if confirmar(self, f"¿Cancelar el remito {remito_id}?"):
+            self.s.logistica.cancelar(remito_id)
 
     @accion
     def recibir(self) -> None:

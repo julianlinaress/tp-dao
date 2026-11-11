@@ -22,6 +22,7 @@ def app(tmp_path, monkeypatch):
     errores = []
     monkeypatch.setattr(componentes.messagebox, "showerror", lambda _t, m, **k: errores.append(m))
     monkeypatch.setattr(messagebox, "showinfo", lambda *a, **k: None)
+    monkeypatch.setattr(messagebox, "askyesno", lambda *a, **k: True)
     ruta = tmp_path / "ui.db"
     CargaEjemplo(ruta).ejecutar()
     try:

@@ -1,7 +1,7 @@
 from tkinter import ttk
 
 from biblioteca.dominio.enums import EstadoFisico, EstadoPrestamo
-from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Selector, Tabla, accion
+from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Selector, Tabla, accion, confirmar
 
 COLUMNAS = [("N°", 45), ("Socio", 190), ("Libro", 200), ("Ejemplar", 85), ("Tipo", 120), ("Origen", 140), ("Destino", 140), ("Solicitud", 90), ("Vencimiento", 105), ("Estado", 90)]
 
@@ -43,11 +43,15 @@ class PantallaPrestamos(Pantalla):
 
     @accion
     def retirar(self) -> None:
-        self.s.prestamos.retirar(self.tabla.elegido())
+        prestamo_id = self.tabla.elegido()
+        if confirmar(self, f"¿Registrar el retiro del préstamo {prestamo_id}?"):
+            self.s.prestamos.retirar(prestamo_id)
 
     @accion
     def cancelar(self) -> None:
-        self.s.prestamos.cancelar(self.tabla.elegido())
+        prestamo_id = self.tabla.elegido()
+        if confirmar(self, f"¿Cancelar el préstamo {prestamo_id}?"):
+            self.s.prestamos.cancelar(prestamo_id)
 
     @accion
     def devolver(self) -> None:
@@ -77,4 +81,6 @@ class PantallaMultas(Pantalla):
 
     @accion
     def pagar(self) -> None:
-        self.s.prestamos.pagar_multa(self.tabla.elegido())
+        multa_id = self.tabla.elegido()
+        if confirmar(self, "¿Registrar el pago de la multa seleccionada?"):
+            self.s.prestamos.pagar_multa(multa_id)

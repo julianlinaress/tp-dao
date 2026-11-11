@@ -1,4 +1,4 @@
-from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Tabla, accion
+from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Tabla, accion, confirmar
 
 COLUMNAS = [("Código", 70), ("Nombre", 200), ("Dirección", 220), ("Teléfono", 110), ("Email", 200), ("Horarios", 160), ("Estado", 80)]
 
@@ -36,8 +36,12 @@ class PantallaSedes(Pantalla):
 
     @accion
     def dar_baja(self) -> None:
-        self.s.sedes.dar_baja(self.tabla.elegido())
+        sede = self._sedes[self.tabla.elegido()]
+        if confirmar(self, f"¿Dar de baja la sede {sede}?"):
+            self.s.sedes.dar_baja(sede.id)
 
     @accion
     def reactivar(self) -> None:
-        self.s.sedes.reactivar(self.tabla.elegido())
+        sede = self._sedes[self.tabla.elegido()]
+        if confirmar(self, f"¿Reactivar la sede {sede}?"):
+            self.s.sedes.reactivar(sede.id)

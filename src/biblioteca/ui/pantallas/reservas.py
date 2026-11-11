@@ -1,4 +1,4 @@
-from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Tabla, accion
+from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Tabla, accion, confirmar
 
 COLUMNAS = [("N°", 50), ("Socio", 220), ("Libro", 260), ("Sede", 180), ("Fecha", 95), ("Retirar hasta", 95), ("Ejemplar", 90), ("Estado", 90)]
 
@@ -29,8 +29,12 @@ class PantallaReservas(Pantalla):
 
     @accion
     def retirar(self) -> None:
-        self.s.reservas.retirar(self.tabla.elegido())
+        reserva_id = self.tabla.elegido()
+        if confirmar(self, f"¿Registrar el retiro de la reserva {reserva_id}?"):
+            self.s.reservas.retirar(reserva_id)
 
     @accion
     def cancelar(self) -> None:
-        self.s.reservas.cancelar(self.tabla.elegido())
+        reserva_id = self.tabla.elegido()
+        if confirmar(self, f"¿Cancelar la reserva {reserva_id}?"):
+            self.s.reservas.cancelar(reserva_id)

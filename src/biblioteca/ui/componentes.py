@@ -13,7 +13,7 @@ ESTADOS_DE_ALERTA = {"Vencido", "Impaga", "ConIncidencia", "Inhabilitado", "Baja
 
 
 def confirmar(pantalla, mensaje: str) -> bool:
-    return messagebox.askyesno("Confirmar eliminación", mensaje, parent=pantalla)
+    return messagebox.askyesno("Confirmar", mensaje, parent=pantalla)
 
 
 def accion(metodo: Callable) -> Callable:

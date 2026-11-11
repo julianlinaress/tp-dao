@@ -43,7 +43,10 @@ class PantallaSocios(Pantalla):
     @accion
     def alternar(self) -> None:
         socio_id = self.tabla.elegido()
-        self.s.socios.cambiar_habilitacion(socio_id, not self._socios[socio_id].es_habilitado)
+        socio = self._socios[socio_id]
+        accion_texto = "Inhabilitar" if socio.es_habilitado else "Habilitar"
+        if confirmar(self, f"¿{accion_texto} al socio {socio}?"):
+            self.s.socios.cambiar_habilitacion(socio_id, not socio.es_habilitado)
 
     @accion
     def eliminar(self) -> None:
