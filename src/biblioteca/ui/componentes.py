@@ -12,6 +12,10 @@ from biblioteca.ui import tema
 ESTADOS_DE_ALERTA = {"Vencido", "Impaga", "ConIncidencia", "Inhabilitado", "Baja", "FueraDeServicio"}
 
 
+def confirmar(pantalla, mensaje: str) -> bool:
+    return messagebox.askyesno("Confirmar eliminación", mensaje, parent=pantalla)
+
+
 def accion(metodo: Callable) -> Callable:
     """Ejecuta una acción de pantalla, muestra los rechazos y refresca los datos."""
 

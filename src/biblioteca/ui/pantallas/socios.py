@@ -1,13 +1,13 @@
 from tkinter import ttk
 
-from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Tabla, accion
+from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Tabla, accion, confirmar
 
 COLUMNAS = [("DNI", 100), ("Apellido", 170), ("Nombre", 170), ("Email", 240), ("Alta", 100), ("Situación", 110)]
 
 
 class PantallaSocios(Pantalla):
     def construir(self) -> None:
-        barra = self.barra([("Nuevo", self.nuevo), ("Modificar", self.modificar), ("Habilitar / Inhabilitar", self.alternar)])
+        barra = self.barra([("Nuevo", self.nuevo), ("Modificar", self.modificar), ("Habilitar / Inhabilitar", self.alternar), ("Eliminar", self.eliminar)])
         self.busqueda = ttk.Entry(barra, width=28)
         self.busqueda.pack(side="right")
         self.busqueda.bind("<KeyRelease>", lambda _: self.refrescar())
@@ -44,3 +44,9 @@ class PantallaSocios(Pantalla):
     def alternar(self) -> None:
         socio_id = self.tabla.elegido()
         self.s.socios.cambiar_habilitacion(socio_id, not self._socios[socio_id].es_habilitado)
+
+    @accion
+    def eliminar(self) -> None:
+        socio = self._socios[self.tabla.elegido()]
+        if confirmar(self, f"¿Eliminar al socio {socio}?"):
+            self.s.socios.eliminar(socio.id)

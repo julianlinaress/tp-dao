@@ -33,6 +33,15 @@ class LibroDAO(DAO[Libro]):
             DUPLICADO,
         )
 
+    def referencias(self, libro_id: int) -> dict[str, int]:
+        """Cuenta lo que todavía referencia al libro e impide eliminarlo."""
+        fila = self._uno(
+            """SELECT (SELECT COUNT(*) FROM ejemplares WHERE libro_id = ?1) AS ejemplares,
+                      (SELECT COUNT(*) FROM reservas WHERE libro_id = ?1) AS reservas""",
+            (libro_id,),
+        )
+        return dict(fila)
+
     def generos(self) -> list[str]:
         filas = self._todos("SELECT DISTINCT genero FROM libros ORDER BY genero")
         return [fila["genero"] for fila in filas]

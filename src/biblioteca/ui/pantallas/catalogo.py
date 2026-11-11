@@ -1,14 +1,14 @@
 from tkinter import ttk
 
 from biblioteca.dominio.enums import EstadoFisico
-from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Selector, Tabla, accion
+from biblioteca.ui.componentes import Campo, Dialogo, Pantalla, Selector, Tabla, accion, confirmar
 
 ESTADOS_FISICOS = [(estado.value, estado) for estado in EstadoFisico]
 
 
 class PantallaLibros(Pantalla):
     def construir(self) -> None:
-        self.barra([("Nuevo", self.nuevo), ("Modificar", self.modificar)])
+        self.barra([("Nuevo", self.nuevo), ("Modificar", self.modificar), ("Eliminar", self.eliminar)])
         self.tabla = Tabla(self, [("ISBN", 130), ("Título", 260), ("Autor", 200), ("Edición", 80), ("Género", 120), ("Editorial", 160)])
         self.tabla.pack(fill="both", expand=True)
 
@@ -34,10 +34,16 @@ class PantallaLibros(Pantalla):
         if datos:
             self.s.catalogo.actualizar_libro(libro_id, **datos)
 
+    @accion
+    def eliminar(self) -> None:
+        libro = self._libros[self.tabla.elegido()]
+        if confirmar(self, f"¿Eliminar el libro «{libro.titulo}»?"):
+            self.s.catalogo.eliminar_libro(libro.id)
+
 
 class PantallaEjemplares(Pantalla):
     def construir(self) -> None:
-        self.barra([("Nuevo", self.nuevo), ("Sacar de servicio", self.sacar), ("Reparar / Reincorporar", self.reparar)])
+        self.barra([("Nuevo", self.nuevo), ("Sacar de servicio", self.sacar), ("Reparar / Reincorporar", self.reparar), ("Eliminar", self.eliminar)])
         self.tabla = Tabla(self, [("Inventario", 100), ("Libro", 280), ("Sede", 180), ("Ubicación actual", 180), ("Circulación", 130), ("Estado físico", 110)])
         self.tabla.pack(fill="both", expand=True)
 
@@ -48,6 +54,12 @@ class PantallaEjemplares(Pantalla):
                     e.estado_circulacion.nombre, e.estado_fisico))
             for e in self.s.catalogo.listar_ejemplares()
         )
+
+    @accion
+    def eliminar(self) -> None:
+        ejemplar_id = self.tabla.elegido()
+        if confirmar(self, "¿Eliminar el ejemplar seleccionado?"):
+            self.s.catalogo.eliminar_ejemplar(ejemplar_id)
 
     @accion
     def nuevo(self) -> None:

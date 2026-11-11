@@ -4,6 +4,7 @@ from biblioteca.dominio.ejemplar import Ejemplar
 from biblioteca.dominio.enums import EstadoFisico
 from biblioteca.dominio.errores import ReglaIncumplida
 from biblioteca.dominio.libro import Libro
+from biblioteca.servicios.eliminacion import exigir_sin_referencias
 from biblioteca.servicios.validaciones import limpiar_textos, normalizar_isbn
 
 
@@ -27,6 +28,24 @@ class CatalogoServicio:
             setattr(libro, campo, valor)
         self._r.libros.actualizar(libro)
         return libro
+
+    def eliminar_libro(self, libro_id: int) -> None:
+        with self._r.transaccion():
+            libro = self._r.libros.requerir(libro_id)
+            exigir_sin_referencias(
+                f"el libro «{libro.titulo}»", self._r.libros.referencias(libro_id),
+                "Elimine antes sus ejemplares.",
+            )
+            self._r.libros.eliminar(libro_id)
+
+    def eliminar_ejemplar(self, ejemplar_id: int) -> None:
+        with self._r.transaccion():
+            ejemplar = self._r.ejemplares.requerir(ejemplar_id)
+            exigir_sin_referencias(
+                f"el ejemplar {ejemplar.codigo_inventario}",
+                self._r.ejemplares.referencias(ejemplar_id),
+            )
+            self._r.ejemplares.eliminar(ejemplar_id)
 
     def listar_libros(self) -> list[Libro]:
         return self._r.libros.listar()

@@ -49,6 +49,16 @@ class EjemplarDAO(DAO[Ejemplar]):
             DUPLICADO,
         )
 
+    def referencias(self, ejemplar_id: int) -> dict[str, int]:
+        """Cuenta el historial que impide eliminar el ejemplar."""
+        fila = self._uno(
+            """SELECT (SELECT COUNT(*) FROM prestamos WHERE ejemplar_id = ?1) AS prestamos,
+                      (SELECT COUNT(*) FROM reservas WHERE ejemplar_id = ?1) AS reservas,
+                      (SELECT COUNT(*) FROM detalles_remito WHERE ejemplar_id = ?1) AS remitos""",
+            (ejemplar_id,),
+        )
+        return dict(fila)
+
     def listar_por_libro_y_sede(self, libro_id: int, sede_id: int) -> list[Ejemplar]:
         return self._mapear(
             "SELECT * FROM ejemplares WHERE libro_id = ? AND sede_id = ? ORDER BY id",

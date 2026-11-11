@@ -69,5 +69,8 @@ class DAO[T](Consultas, ABC):
             raise RegistroNoEncontrado(f"No existe {self.nombre} con id {id_}")
         return entidad
 
+    def eliminar(self, id_: int) -> None:
+        self._ejecutar(f"DELETE FROM {self.tabla} WHERE id = ?", (id_,))
+
     def listar(self) -> list[T]:
         return self._mapear(f"SELECT * FROM {self.tabla} ORDER BY {self.orden}")

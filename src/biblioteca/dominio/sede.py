@@ -16,6 +16,9 @@ class Sede(Entidad):
     def dar_baja(self) -> None:
         self.es_activa = False
 
+    def reactivar(self) -> None:
+        self.es_activa = True
+
     def esta_activa(self) -> bool:
         return self.es_activa
 

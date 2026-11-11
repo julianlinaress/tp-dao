@@ -5,7 +5,7 @@ COLUMNAS = [("Código", 70), ("Nombre", 200), ("Dirección", 220), ("Teléfono",
 
 class PantallaSedes(Pantalla):
     def construir(self) -> None:
-        self.barra([("Nueva", self.nueva), ("Modificar", self.modificar), ("Dar de baja", self.dar_baja)])
+        self.barra([("Nueva", self.nueva), ("Modificar", self.modificar), ("Dar de baja", self.dar_baja), ("Reactivar", self.reactivar)])
         self.tabla = Tabla(self, COLUMNAS)
         self.tabla.pack(fill="both", expand=True)
 
@@ -37,3 +37,7 @@ class PantallaSedes(Pantalla):
     @accion
     def dar_baja(self) -> None:
         self.s.sedes.dar_baja(self.tabla.elegido())
+
+    @accion
+    def reactivar(self) -> None:
+        self.s.sedes.reactivar(self.tabla.elegido())

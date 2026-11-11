@@ -3,6 +3,7 @@
 from biblioteca.dominio.errores import ReglaIncumplida
 from biblioteca.dominio.sede import Sede
 from biblioteca.dominio.socio import Socio
+from biblioteca.servicios.eliminacion import exigir_sin_referencias
 from biblioteca.servicios.validaciones import limpiar_textos, validar_dni, validar_email
 
 DESCRIPCION_PENDIENTES = {
@@ -50,6 +51,11 @@ class SedeServicio:
             sede.dar_baja()
             self._r.sedes.actualizar(sede)
 
+    def reactivar(self, sede_id: int) -> None:
+        sede = self._r.sedes.requerir(sede_id)
+        sede.reactivar()
+        self._r.sedes.actualizar(sede)
+
     def listar(self) -> list[Sede]:
         return self._r.sedes.listar()
 
@@ -84,6 +90,15 @@ class SocioServicio:
         socio = self._r.socios.requerir(socio_id)
         socio.habilitar() if habilitado else socio.deshabilitar()
         self._r.socios.actualizar(socio)
+
+    def eliminar(self, socio_id: int) -> None:
+        with self._r.transaccion():
+            socio = self._r.socios.requerir(socio_id)
+            exigir_sin_referencias(
+                f"al socio {socio}", self._r.socios.referencias(socio_id),
+                "Inhabilítelo para conservar su historial.",
+            )
+            self._r.socios.eliminar(socio_id)
 
     def listar(self, texto: str = "") -> list[Socio]:
         return self._r.socios.buscar(texto.strip()) if texto.strip() else self._r.socios.listar()

@@ -35,6 +35,15 @@ class SocioDAO(DAO[Socio]):
             DUPLICADO,
         )
 
+    def referencias(self, socio_id: int) -> dict[str, int]:
+        """Cuenta el historial que impide eliminar al socio."""
+        fila = self._uno(
+            """SELECT (SELECT COUNT(*) FROM prestamos WHERE socio_id = ?1) AS prestamos,
+                      (SELECT COUNT(*) FROM reservas WHERE socio_id = ?1) AS reservas""",
+            (socio_id,),
+        )
+        return dict(fila)
+
     def buscar(self, texto: str) -> list[Socio]:
         patron = f"%{texto}%"
         return self._mapear(

@@ -94,3 +94,33 @@ def test_alta_de_ejemplar_deteriorado_queda_disponible(esc):
     guardado = esc.s.repositorios.ejemplares.requerir(ejemplar.id)
     assert guardado.estado_circulacion.nombre == DISPONIBLE
     assert guardado.estado_fisico is EstadoFisico.DETERIORADO
+
+
+def test_eliminar_registros_sin_historial(esc):
+    s = esc.s
+    libro = s.catalogo.crear_libro(isbn="9789500000002", titulo="Nuevo", autor="x", edicion="1", genero="x", editorial="x")
+    ejemplar = s.catalogo.crear_ejemplar(libro.id, esc.cba.id, "Z-1")
+    with pytest.raises(ReglaIncumplida):
+        s.catalogo.eliminar_libro(libro.id)
+    s.catalogo.eliminar_ejemplar(ejemplar.id)
+    s.catalogo.eliminar_libro(libro.id)
+    socio = s.socios.crear(dni="30000099", nombre="x", apellido="y", email="a@b.co")
+    s.socios.eliminar(socio.id)
+    assert libro not in s.catalogo.listar_libros()
+    assert socio not in s.socios.listar()
+
+
+def test_no_se_elimina_con_historial(esc):
+    with pytest.raises(ReglaIncumplida, match="ejemplares"):
+        esc.s.catalogo.eliminar_libro(esc.libro.id)
+    esc.s.prestamos.solicitar(esc.socio.id, esc.libro.id, esc.cba.id, esc.cba.id)
+    with pytest.raises(ReglaIncumplida, match="prestamos"):
+        esc.s.socios.eliminar(esc.socio.id)
+    with pytest.raises(ReglaIncumplida, match="prestamos"):
+        esc.s.catalogo.eliminar_ejemplar(esc.ejemplar.id)
+
+
+def test_reactivar_sede(esc):
+    esc.s.sedes.dar_baja(esc.ros.id)
+    esc.s.sedes.reactivar(esc.ros.id)
+    assert esc.ros in esc.s.sedes.listar_activas()
