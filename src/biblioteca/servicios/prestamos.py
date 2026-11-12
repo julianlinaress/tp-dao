@@ -9,11 +9,10 @@ from biblioteca.servicios.validaciones import exigir_sede_activa, exigir_socio_h
 
 
 class PrestamoServicio:
-    def __init__(self, repositorios, reloj, reservas, estrategia_multa) -> None:
+    def __init__(self, repositorios, reloj, reservas) -> None:
         self._r = repositorios
         self._reloj = reloj
         self._reservas = reservas
-        self._estrategia_multa = estrategia_multa
 
     def solicitar(
         self, socio_id: int, libro_id: int, sede_origen_id: int, sede_destino_id: int,
@@ -87,7 +86,7 @@ class PrestamoServicio:
             prestamo = self._r.prestamos.requerir(prestamo_id)
             sede = self._r.sedes.requerir(sede_id)
             prestamo.registrar_devolucion(
-                sede, self._reloj.hoy(), estado_fisico, observaciones.strip(), self._estrategia_multa
+                sede, self._reloj.hoy(), estado_fisico, observaciones.strip()
             )
             self._r.prestamos.actualizar(prestamo)
             self._r.ejemplares.actualizar(prestamo.ejemplar)

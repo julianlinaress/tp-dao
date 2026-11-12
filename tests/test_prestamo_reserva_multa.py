@@ -2,15 +2,14 @@ from datetime import timedelta
 
 import pytest
 
+from biblioteca.config import MONTO_MULTA_POR_DIA, TOPE_MULTA
 from biblioteca.dominio.enums import EstadoFisico, EstadoPrestamo, EstadoReserva
 from biblioteca.dominio.errores import ReglaIncumplida
 from biblioteca.dominio.estados_ejemplar import DISPONIBLE, RESERVADO
 from biblioteca.dominio.estrategias_multa import MultaFijaPorDia, MultaPorDiaConTope
 from biblioteca.dominio.reserva import Reserva
+from biblioteca.dominio.tipo_prestamo import INTERBIBLIOTECARIO, LOCAL
 from fabrica import HOY, ejemplar, libro, prestamo_inter, sede, socio
-
-FIJA = MultaFijaPorDia(100)
-
 
 def activo():
     prestamo = prestamo_inter()
@@ -20,8 +19,20 @@ def activo():
 
 
 def test_estrategias_de_multa():
-    assert FIJA.calcular(3) == 300
+    assert MultaFijaPorDia(100).calcular(3) == 300
     assert MultaPorDiaConTope(100, 250).calcular(3) == 250
+
+
+def test_solo_el_interbibliotecario_tiene_tope_de_multa():
+    assert LOCAL.estrategia_multa.calcular(100) == 100 * MONTO_MULTA_POR_DIA
+    assert INTERBIBLIOTECARIO.estrategia_multa.calcular(100) == TOPE_MULTA
+
+
+def test_devolucion_muy_atrasada_se_topa_en_interbibliotecario():
+    prestamo = activo()
+    fecha = prestamo.fecha_vencimiento + timedelta(days=100)
+    prestamo.registrar_devolucion(prestamo.sede_destino, fecha, EstadoFisico.BUENO, "")
+    assert prestamo.multa.monto == TOPE_MULTA
 
 
 def test_retiro_calcula_vencimiento_segun_tipo():
@@ -35,7 +46,7 @@ def test_no_se_retira_si_no_llego_a_destino():
 
 def test_devolucion_en_termino_no_genera_multa():
     prestamo = activo()
-    prestamo.registrar_devolucion(prestamo.sede_destino, prestamo.fecha_vencimiento, EstadoFisico.BUENO, "", FIJA)
+    prestamo.registrar_devolucion(prestamo.sede_destino, prestamo.fecha_vencimiento, EstadoFisico.BUENO, "")
     assert prestamo.estado is EstadoPrestamo.DEVUELTO
     assert prestamo.multa is None
 
@@ -44,20 +55,20 @@ def test_devolucion_atrasada_genera_multa_con_la_estrategia():
     prestamo = activo()
     fecha = prestamo.fecha_vencimiento + timedelta(days=4)
     assert prestamo.esta_vencido(fecha)
-    prestamo.registrar_devolucion(prestamo.sede_destino, fecha, EstadoFisico.BUENO, "", FIJA)
-    assert (prestamo.multa.dias_atraso, prestamo.multa.monto) == (4, 400)
+    prestamo.registrar_devolucion(prestamo.sede_destino, fecha, EstadoFisico.BUENO, "")
+    assert (prestamo.multa.dias_atraso, prestamo.multa.monto) == (4, 2000)
     assert not prestamo.esta_vencido(fecha)
 
 
 def test_devolucion_en_otra_sede_se_rechaza():
     prestamo = activo()
     with pytest.raises(ReglaIncumplida):
-        prestamo.registrar_devolucion(prestamo.sede_origen, HOY, EstadoFisico.BUENO, "", FIJA)
+        prestamo.registrar_devolucion(prestamo.sede_origen, HOY, EstadoFisico.BUENO, "")
 
 
 def test_multa_no_se_paga_dos_veces():
     prestamo = activo()
-    prestamo.registrar_devolucion(prestamo.sede_destino, prestamo.fecha_vencimiento + timedelta(days=1), EstadoFisico.BUENO, "", FIJA)
+    prestamo.registrar_devolucion(prestamo.sede_destino, prestamo.fecha_vencimiento + timedelta(days=1), EstadoFisico.BUENO, "")
     prestamo.multa.pagar()
     with pytest.raises(ReglaIncumplida):
         prestamo.multa.pagar()

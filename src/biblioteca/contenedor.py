@@ -2,8 +2,7 @@
 
 from pathlib import Path
 
-from biblioteca.config import MONTO_MULTA_POR_DIA, RUTA_BASE_DATOS, TOPE_MULTA
-from biblioteca.dominio.estrategias_multa import MultaPorDiaConTope
+from biblioteca.config import RUTA_BASE_DATOS
 from biblioteca.persistencia.base_datos import BaseDatos
 from biblioteca.persistencia.repositorios import Repositorios
 from biblioteca.servicios.administracion import SedeServicio, SocioServicio
@@ -24,8 +23,6 @@ class Servicios:
         self.socios = SocioServicio(r, self.reloj)
         self.reservas = ReservaServicio(r, self.reloj)
         self.catalogo = CatalogoServicio(r, self.reservas)
-        self.prestamos = PrestamoServicio(
-            r, self.reloj, self.reservas, MultaPorDiaConTope(MONTO_MULTA_POR_DIA, TOPE_MULTA)
-        )
+        self.prestamos = PrestamoServicio(r, self.reloj, self.reservas)
         self.logistica = LogisticaServicio(r, self.reloj, self.reservas)
         self.reportes = ReporteServicio(r.base_datos, self.reloj)

@@ -6,7 +6,6 @@ from biblioteca.dominio.ejemplar import Ejemplar
 from biblioteca.dominio.entidad import Entidad
 from biblioteca.dominio.enums import EstadoFisico, EstadoPrestamo
 from biblioteca.dominio.errores import ReglaIncumplida
-from biblioteca.dominio.estrategias_multa import EstrategiaMulta
 from biblioteca.dominio.multa import Multa
 from biblioteca.dominio.sede import Sede
 from biblioteca.dominio.socio import Socio
@@ -54,7 +53,6 @@ class SolicitudPrestamo(Entidad):
         fecha: date,
         estado_fisico: EstadoFisico,
         observaciones: str,
-        estrategia: EstrategiaMulta,
     ) -> Devolucion:
         self._exigir(EstadoPrestamo.ACTIVO, "devolver")
         if sede != self.sede_destino:
@@ -70,7 +68,7 @@ class SolicitudPrestamo(Entidad):
         dias_atraso = (fecha - self.fecha_vencimiento).days
         if dias_atraso > 0:
             self.multa = Multa(dias_atraso=dias_atraso)
-            self.multa.calcular(dias_atraso, estrategia)
+            self.multa.calcular(dias_atraso, self.tipo.estrategia_multa)
         return self.devolucion
 
     def _exigir(self, estado: EstadoPrestamo, operacion: str) -> None:
