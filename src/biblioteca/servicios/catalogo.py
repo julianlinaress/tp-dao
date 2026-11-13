@@ -57,18 +57,21 @@ class CatalogoServicio:
         self, libro_id: int, sede_id: int, codigo_inventario: str,
         estado_fisico: EstadoFisico = EstadoFisico.BUENO,
     ) -> Ejemplar:
-        sede = self._r.sedes.requerir(sede_id)
-        ejemplar = Ejemplar(
-            codigo_inventario=limpiar_textos(codigo=codigo_inventario)["codigo"].upper(),
-            libro=self._r.libros.requerir(libro_id),
-            sede=sede,
-            ubicacion_actual=sede,
-        )
-        if estado_fisico.requiere_reparacion:
-            ejemplar.sacar_de_servicio(estado_fisico)
-        else:
-            ejemplar.estado_fisico = estado_fisico
-        return self._r.ejemplares.crear(ejemplar)
+        with self._r.transaccion():
+            sede = self._r.sedes.requerir(sede_id)
+            ejemplar = Ejemplar(
+                codigo_inventario=limpiar_textos(codigo=codigo_inventario)["codigo"].upper(),
+                libro=self._r.libros.requerir(libro_id),
+                sede=sede,
+                ubicacion_actual=sede,
+            )
+            if estado_fisico.requiere_reparacion:
+                ejemplar.sacar_de_servicio(estado_fisico)
+            else:
+                ejemplar.estado_fisico = estado_fisico
+            ejemplar = self._r.ejemplares.crear(ejemplar)
+            self._reservas.atender_liberado(ejemplar)
+            return ejemplar
 
     def listar_ejemplares(self) -> list[Ejemplar]:
         return self._r.ejemplares.listar()

@@ -2,7 +2,7 @@ import pytest
 
 from biblioteca.dominio.enums import EstadoFisico, EstadoReserva, TipoRemito
 from biblioteca.dominio.errores import RegistroDuplicado, ReglaIncumplida
-from biblioteca.dominio.estados_ejemplar import DISPONIBLE, PRESTADO, RESERVADO
+from biblioteca.dominio.estados_ejemplar import DISPONIBLE, FUERA_DE_SERVICIO, PRESTADO, RESERVADO
 
 
 def prestado(esc):
@@ -70,6 +70,71 @@ def test_devolucion_activa_la_reserva_mas_antigua_y_se_retira(esc):
     nuevo = esc.s.reservas.retirar(primero.id)
     assert nuevo.tipo.nombre == "Local"
     assert estado(esc, primero) is EstadoReserva.ATENDIDA
+    assert esc.estado_ejemplar() == PRESTADO
+
+
+@pytest.mark.parametrize("fisico", [EstadoFisico.BUENO, EstadoFisico.DETERIORADO])
+def test_alta_de_ejemplar_activa_la_reserva_mas_antigua(esc, fisico):
+    prestado(esc)
+    primera = reservar(esc, esc.otro_socio())
+    esc.reloj.avanzar(days=1)
+    segunda = reservar(esc, esc.otro_socio("30000003"))
+
+    ejemplar = esc.s.catalogo.crear_ejemplar(esc.libro.id, esc.cba.id, "A-2", fisico)
+
+    guardada = esc.s.repositorios.reservas.requerir(primera.id)
+    assert guardada.estado is EstadoReserva.ACTIVA
+    assert guardada.ejemplar.id == ejemplar.id
+    assert guardada.fecha_vencimiento > esc.reloj.hoy()
+    assert estado(esc, segunda) is EstadoReserva.PENDIENTE
+    assert ejemplar.estado_circulacion.nombre == RESERVADO
+    assert esc.estado_ejemplar(ejemplar) == RESERVADO
+
+
+@pytest.mark.parametrize("fisico", [EstadoFisico.DANADO, EstadoFisico.DESTRUIDO])
+def test_alta_fuera_de_servicio_no_activa_reservas(esc, fisico):
+    prestado(esc)
+    reserva = reservar(esc, esc.otro_socio())
+
+    ejemplar = esc.s.catalogo.crear_ejemplar(esc.libro.id, esc.cba.id, "A-2", fisico)
+
+    assert estado(esc, reserva) is EstadoReserva.PENDIENTE
+    assert esc.estado_ejemplar(ejemplar) == FUERA_DE_SERVICIO
+
+
+@pytest.mark.parametrize("otra_sede", [False, True])
+def test_alta_no_activa_reservas_de_otro_libro_o_sede(esc, otra_sede):
+    prestado(esc)
+    reserva = reservar(esc, esc.otro_socio())
+
+    if otra_sede:
+        ejemplar = esc.s.catalogo.crear_ejemplar(esc.libro.id, esc.ros.id, "A-2")
+    else:
+        _, ejemplar = esc.otro_libro()
+
+    assert estado(esc, reserva) is EstadoReserva.PENDIENTE
+    assert esc.estado_ejemplar(ejemplar) == DISPONIBLE
+
+
+def test_error_al_activar_reserva_revierte_alta_de_ejemplar(esc, monkeypatch):
+    prestado(esc)
+    reserva = reservar(esc, esc.otro_socio())
+    actualizar = esc.s.repositorios.reservas.actualizar
+
+    def actualizar_y_fallar(reserva):
+        actualizar(reserva)
+        raise RuntimeError("Fallo al activar reserva")
+
+    monkeypatch.setattr(esc.s.repositorios.reservas, "actualizar", actualizar_y_fallar)
+
+    with pytest.raises(RuntimeError, match="Fallo al activar reserva"):
+        esc.s.catalogo.crear_ejemplar(esc.libro.id, esc.cba.id, "A-2")
+
+    assert [e.id for e in esc.s.catalogo.listar_ejemplares()] == [esc.ejemplar.id]
+    guardada = esc.s.repositorios.reservas.requerir(reserva.id)
+    assert guardada.estado is EstadoReserva.PENDIENTE
+    assert guardada.ejemplar is None
+    assert guardada.fecha_vencimiento is None
     assert esc.estado_ejemplar() == PRESTADO
 
 
